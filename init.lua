@@ -222,7 +222,13 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
+-- Global indent defaults
 vim.cmd 'filetype plugin indent on'
+
+vim.opt.tabstop = 4 -- Number of spaces that a <Tab> in the file counts for
+vim.opt.shiftwidth = 4 -- Number of spaces to use for each step of (auto)indent
+vim.opt.expandtab = true -- Convert tabs to spaces
+vim.opt.softtabstop = 4 -- Number of spaces that a <Tab> counts for while performing editing operations
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
