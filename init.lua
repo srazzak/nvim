@@ -178,6 +178,7 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+vim.keymap.set('n', '<leader>d', vim.diagnostic.open_float, { desc = 'Open [d]iagnostic for line' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -225,10 +226,10 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 -- Global indent defaults
 vim.cmd 'filetype plugin indent on'
 
-vim.opt.tabstop = 4 -- Number of spaces that a <Tab> in the file counts for
-vim.opt.shiftwidth = 4 -- Number of spaces to use for each step of (auto)indent
+vim.opt.tabstop = 2 -- Number of spaces that a <Tab> in the file counts for
+vim.opt.shiftwidth = 2 -- Number of spaces to use for each step of (auto)indent
 vim.opt.expandtab = true -- Convert tabs to spaces
-vim.opt.softtabstop = 4 -- Number of spaces that a <Tab> counts for while performing editing operations
+vim.opt.softtabstop = 2 -- Number of spaces that a <Tab> counts for while performing editing operations
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
@@ -282,18 +283,18 @@ require('lazy').setup({
   -- options to `gitsigns.nvim`.
   --
   -- See `:help gitsigns` to understand what the configuration keys do
-  { -- Adds git related signs to the gutter, as well as utilities for managing changes
-    'lewis6991/gitsigns.nvim',
-    opts = {
-      signs = {
-        add = { text = '+' },
-        change = { text = '~' },
-        delete = { text = '_' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
-    },
-  },
+  -- { -- Adds git related signs to the gutter, as well as utilities for managing changes
+  --   'lewis6991/gitsigns.nvim',
+  --   opts = {
+  --     signs = {
+  --       add = { text = '+' },
+  --       change = { text = '~' },
+  --       delete = { text = '_' },
+  --       topdelete = { text = '‾' },
+  --       changedelete = { text = '~' },
+  --     },
+  --   },
+  -- },
 
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
@@ -784,6 +785,7 @@ require('lazy').setup({
         typescript = { 'prettierd' },
         typescriptreact = { 'prettierd' },
         rust = { 'rust-analyzer' },
+        wgsl = { 'wgsl-analyzer ' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -875,21 +877,29 @@ require('lazy').setup({
     -- change the command in the config to whatever the name of that colorscheme is.
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'Shatur/neovim-ayu',
+    'rose-pine/neovim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     config = function()
       ---@diagnostic disable-next-line: missing-fields
-      require('ayu').setup {}
+      require('rose-pine').setup {}
 
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'ayu-mirage'
+      vim.cmd.colorscheme 'rose-pine-dawn'
     end,
   },
 
   -- Highlight todo, notes, etc in comments
-  { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
+  {
+    'folke/todo-comments.nvim',
+    event = 'VimEnter',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    opts = {
+      pattern = [[\b(KEYWORDS):?]],
+      signs = false,
+    },
+  },
 
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
@@ -900,7 +910,7 @@ require('lazy').setup({
       --  - va)  - [V]isually select [A]round [)]paren
       --  - yinq - [Y]ank [I]nside [N]ext [Q]uote
       --  - ci'  - [C]hange [I]nside [']quote
-      require('mini.ai').setup { n_lines = 500 }
+
 
       -- Add/delete/replace surroundings (brackets, quotes, etc.)
       --
@@ -931,10 +941,13 @@ require('lazy').setup({
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
-    main = 'nvim-treesitter.configs', -- Sets main module to use for opts
+    main = 'nvim-treesitter.config', -- Sets main module to use for opts
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter-textobjects',
+    },
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'rust', 'wgsl' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -945,6 +958,59 @@ require('lazy').setup({
         additional_vim_regex_highlighting = { 'ruby' },
       },
       indent = { enable = true, disable = { 'ruby' } },
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection = '[x',
+          node_incremental = '[x',
+          node_decremental = ']x',
+          scope_incremental = false,
+        },
+      },
+      textobjects = {
+        select = {
+          enable = true,
+          lookahead = true,
+          keymaps = {
+            ['ac'] = '@class.outer',
+            ['ic'] = '@class.inner',
+            ['af'] = { '@function.outer', '@method.outer' },
+            ['if'] = { '@function.inner', '@method.inner' },
+            ['gc'] = '@comment.outer',
+            ['ia'] = '@parameter.inner',
+            ['aa'] = '@parameter.outer',
+            ['at'] = '@tag.outer',
+            ['it'] = '@tag.inner',
+            ['aI'] = '@indent.outer',
+            ['ai'] = '@indent.outer',
+            ['ii'] = '@indent.inner',
+          },
+        },
+        move = {
+          enable = true,
+          set_jumps = true,
+          goto_next_start = {
+            [']m'] = { '@function.outer', '@method.outer' },
+            [']]'] = '@class.outer',
+            [']/'] = '@comment.outer',
+          },
+          goto_next_end = {
+            [']M'] = { '@function.outer', '@method.outer' },
+            [']['] = '@class.outer',
+            [']*'] = '@comment.outer',
+          },
+          goto_previous_start = {
+            ['[m'] = { '@function.outer', '@method.outer' },
+            ['[['] = '@class.outer',
+            ['[/'] = '@comment.outer',
+          },
+          goto_previous_end = {
+            ['[M'] = { '@function.outer', '@method.outer' },
+            ['[]'] = '@class.outer',
+            ['[*'] = '@comment.outer',
+          },
+        },
+      },
     },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
